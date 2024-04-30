@@ -16,9 +16,9 @@
 
 TFT_eSPI tft = TFT_eSPI();  // Invoke library, pins defined in User_Setup.h
 
-volatile bool sendPunch = false;
-volatile bool sendBlock = false;
-volatile bool sendKick = false;
+volatile bool punch = false;
+volatile bool block = false;
+volatile bool kick = false;
 
 String cmdRecvd = "";
 bool redrawCmdRecvd = false;
@@ -32,8 +32,8 @@ bool redrawHealth = true;
 volatile bool scheduleCmdAsk = true;
 
 #define ARRAY_SIZE 100
-const String player[ARRAY_SIZE] = {}
-const String opp[ARRAY_SIZE] = {}
+String player[ARRAY_SIZE] = {};
+String opp[ARRAY_SIZE] = {};
 
 int playerMoves = 0;
 int oppMoves = 0;
@@ -78,15 +78,20 @@ void receiveCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen)
   Serial.printf("Received message from: %s \n%s\n", macStr, buffer);
   if (recvd[0] == 'P') //only take an ask if you don't have an ask already and only take it XX% of the time
   {
-    opp[oppMoves] = "P"
+    opp[oppMoves] = "P";
     oppMoves++;
+
+    if (player[playerMoves] != "B") {
+      health = health - 5;
+    }
     cmdRecvd = recvd;
+    
     redrawCmdRecvd = true;
     redrawHealth = true;
   }
   else if (recvd[0] == 'B')
   {
-    opp[oppMoves] = "B"
+    opp[oppMoves] = "B";
     oppMoves++;
     cmdRecvd = recvd;
     redrawCmdRecvd = true;
@@ -95,14 +100,20 @@ void receiveCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen)
   }
   else if (recvd[0] == 'K')
   {
-    opp[oppMoves] = "K"
+    opp[oppMoves] = "K";
     oppMoves++;
+    if (player[playerMoves] == "B") {
+      health = health - 5;
+    } else {
+      health = health - 20;
+    }
+    cmdRecvd = recvd;
     redrawCmdRecvd = true;
     redrawHealth = true;
   }
-  else if (recvd(0) == 'G')
+  else if (recvd[0] == 'G')
   {
-    drawEndGame = true;
+    youWin();
   }
 }
 
@@ -134,15 +145,15 @@ void broadcast(const String &message)
 }
 
 void IRAM_ATTR sendPunch(){
-  sendPunch = true;
+  punch = true;
 }
 
 void IRAM_ATTR sendBlock(){
-  sendBlock = true;
+  block = true;
 }
 
 void IRAM_ATTR sendKick(){
-  sendKick = true;
+  kick = true;
 }
 
 void IRAM_ATTR onAskReqTimer(){
@@ -190,9 +201,9 @@ void textSetup(){
   tft.setRotation(0);
   
   tft.setTextSize(2);
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  drawControls();
+  tft.fillScreen(TFT_WHITE);
+  tft.setTextColor(TFT_BLACK);
+  //drawControls();
 
 }
 
@@ -207,52 +218,78 @@ void setup()
 
 }
 
+void drawAction(String cmd) {
+  tft.fillScreen(TFT_WHITE);
+  tft.setTextSize(3);
+  tft.setTextColor(TFT_BLACK);
+  tft.drawString(cmd, 10, 150, 2);
 
-void drawActions(){
+}
 
+
+void youWin() {
+  tft.fillScreen(TFT_GREEN);
+  tft.setTextSize(3);
+  tft.setTextColor(TFT_WHITE);
+  tft.drawString("YOU", 30, 80, 2);
+  tft.drawString("WIN!", 30, 130, 2);
+  delay(10000);
+  ESP.restart();
+}
+
+void youLose() {
+  tft.fillScreen(TFT_RED);
+  tft.setTextSize(3);
+  tft.setTextColor(TFT_BLACK);
+  tft.drawString("YOU", 20, 80, 2);
+  tft.drawString("LOSE!", 18, 130, 2);
+  delay(10000);
+  ESP.restart();
 }
 
 void loop()
 {
-  
-  if (sendPunch){
-    player[playerMoves] = "P"
+
+  if (punch){
+    player[playerMoves] = "P";
     playerMoves++;
     broadcast("PUNCH");
-    sendPunch = false;
+    punch = false;
   }
-  if (sendBlock){
-    player[playerMoves] = "B"
+  if (block){
+    player[playerMoves] = "B";
     playerMoves++;
     broadcast("BLOCK");
-    sendBlock = false;
+    block = false;
   }
-  if (sendKick){
-    player[playerMoves] = "K"
+  if (kick){
+    player[playerMoves] = "K";
     playerMoves++;
+
+    if (opp[oppMoves] == "B") {
+      health = health - 10;
+    }
+
+    health = health - 5;
     broadcast("KICK");
-    sendKick = false;
+    kick = false;
   }
   
 
   if (redrawCmdRecvd || redrawHealth) {
-    tft.fillRect(0, 0, 135, 90, TFT_BLACK);
-    tft.drawString(cmdRecvd.substring(0, cmdRecvd.indexOf(' ')), 0, 0, 2);
-    tft.drawString(cmdRecvd.substring(cmdRecvd.indexOf(' ')+1), 0, 0+lineHeight, 2);
+    //drawing the recieved action!
+    drawAction(cmdRecvd);
+    
     redrawCmdRecvd = false;
     
     if (health <= 0) {
       broadcast("GAMEOVER");
-      tft.fillScreen(TFT_RED);
-      tft.setTextSize(3);
-      tft.setTextColor(TFT_BLACK, TFT_BLUE);
-      tft.drawString("YOU", 20, 80, 2);
-      tft.drawString("LOSE!", 18, 130, 2);
-      delay(6000);
-      ESP.restart();
+      youLose();
     } else {
-      tft.fillRect(15, lineHeight*2+5, 100, 6, TFT_WHITE);
-      tft.fillRect(16, lineHeight*2+5+1, health, 4, TFT_RED);
+      int spacing = 105; 
+      tft.fillRect(15, spacing*2+5, 100, 6, TFT_BLACK);
+      tft.fillRect(16, spacing*2+5+1, 100, 4, TFT_RED);
+      tft.fillRect(16, spacing*2+5+1, 100-health, 4, TFT_WHITE);
     }
     redrawHealth = false;
   }
