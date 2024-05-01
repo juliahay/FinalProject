@@ -16,6 +16,9 @@
 
 TFT_eSPI tft = TFT_eSPI();  // Invoke library, pins defined in User_Setup.h
 
+bool gameStart = false;
+int readyCounter = 0;
+
 volatile bool punch = false;
 volatile bool block = false;
 volatile bool kick = false;
@@ -76,12 +79,23 @@ void receiveCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen)
 
   // Send Debug log message to the serial port
   Serial.printf("Received message from: %s \n%s\n", macStr, buffer);
-  if (recvd[0] == 'P') //only take an ask if you don't have an ask already and only take it XX% of the time
+  if(recvd[0] == 'R')
+  {
+    gameStart = true;
+    if (readyCounter < 5) {
+      broadcast("READY");
+      readyCounter++;
+    }
+    
+  }
+  else if (recvd[0] == 'P') //only take an ask if you don't have an ask already and only take it XX% of the time
   {
     opp[oppMoves] = "P";
     oppMoves++;
 
-    if (player[playerMoves] != "B") {
+    if (player[playerMoves-1] == "B") {
+      health = health;
+    } else {
       health = health - 5;
     }
     cmdRecvd = recvd;
@@ -102,7 +116,7 @@ void receiveCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen)
   {
     opp[oppMoves] = "K";
     oppMoves++;
-    if (player[playerMoves] == "B") {
+    if (player[playerMoves-1] == "B") {
       health = health - 5;
     } else {
       health = health - 20;
@@ -199,11 +213,6 @@ void buttonSetup(){
 void textSetup(){
   tft.init();
   tft.setRotation(0);
-  
-  tft.setTextSize(2);
-  tft.fillScreen(TFT_WHITE);
-  tft.setTextColor(TFT_BLACK);
-  //drawControls();
 
 }
 
@@ -215,6 +224,8 @@ void setup()
   textSetup();
   buttonSetup();
   espnowSetup();
+
+  openingDisplay();
 
 }
 
@@ -247,9 +258,27 @@ void youLose() {
   ESP.restart();
 }
 
+void openingDisplay() {
+  while(!gameStart) {
+    broadcast("READY");
+    tft.fillScreen(TFT_WHITE);
+    tft.setTextSize(2);
+    tft.setTextColor(TFT_BLACK);
+    tft.drawString("WAITING", 6, 30, 2);
+    tft.drawString("FOR", 6, 80, 2);
+    tft.drawString("OTHER", 6, 130, 2);
+    tft.drawString("PLAYER.", 6, 180, 2);
+    delay(1000);
+    tft.drawString("PLAYER .", 6, 180, 2);
+    delay(1000);
+    tft.drawString("PLAYER  .", 6, 180, 2);
+    delay(1000);
+  }
+  
+}
+
 void loop()
 {
-
   if (punch){
     player[playerMoves] = "P";
     playerMoves++;
