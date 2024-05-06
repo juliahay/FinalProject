@@ -2,7 +2,7 @@
 
 This code is for a two player fighter game that utilizes two ESP32s. It was made in April 2024 for the final project of Professor Mark Santolucito's Creative Embedded Systems Course.
 
-![]()
+![](https://github.com/juliahay/FinalProject/blob/main/images/punch.png)
 
 The players can punch to attack their opponent or block to defend themself. The code also features functionality for a kick action but the feature isn't fully implemented. If you want to add it to the game, you must add a button sensor to your ESP32 and add another attachInterrupt() function to the buttonSetup() function. 
 
