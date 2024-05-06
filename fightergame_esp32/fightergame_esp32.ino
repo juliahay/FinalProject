@@ -14,6 +14,11 @@
 #include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
 #include <SPI.h>
 
+//include images
+#include "../images/punch1.h"
+#include "../images/punch2.h"
+#include "../images/block.h"
+
 TFT_eSPI tft = TFT_eSPI();  // Invoke library, pins defined in User_Setup.h
 
 bool gameStart = false;
@@ -225,6 +230,8 @@ void setup()
   buttonSetup();
   espnowSetup();
 
+  tft.setSwapBytes(true);
+
   openingDisplay();
 
 }
@@ -233,6 +240,13 @@ void drawAction(String cmd) {
   tft.fillScreen(TFT_WHITE);
   tft.setTextSize(3);
   tft.setTextColor(TFT_BLACK);
+  if (cmd == "PUNCH") {
+    tft.pushImage(0, 0, 135, 135, punch1); //fix position
+  } else if (cmd == "BLOCK") {
+    tft.pushImage(0, 0, 135, 121, block); //fix position
+  } else if (cmd == "KICK") {
+    //tft.pushImage(0, 0, 236, 135, kick); //fix position, get image
+  }
   tft.drawString(cmd, 10, 150, 2);
 
 }
