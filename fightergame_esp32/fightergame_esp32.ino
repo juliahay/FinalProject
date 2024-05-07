@@ -15,9 +15,10 @@
 #include <SPI.h>
 
 //include images
-#include "../images/punch1.h"
-#include "../images/punch2.h"
-#include "../images/block.h"
+#include "images/punch1.h"
+#include "images/punch2.h"
+#include "images/block.h"
+#include "images/kick.h"
 
 TFT_eSPI tft = TFT_eSPI();  // Invoke library, pins defined in User_Setup.h
 
@@ -241,13 +242,16 @@ void drawAction(String cmd) {
   tft.setTextSize(3);
   tft.setTextColor(TFT_BLACK);
   if (cmd == "PUNCH") {
-    tft.pushImage(0, 0, 135, 135, punch1); //fix position
+    tft.pushImage(0, 0, 135, 135, punch2IMG); 
+    tft.drawString(cmd, 10, 150, 2);
   } else if (cmd == "BLOCK") {
-    tft.pushImage(0, 0, 135, 121, block); //fix position
+    tft.pushImage(0, 23, 135, 121, blockIMG);
+    tft.drawString(cmd, 10, 150, 2);
   } else if (cmd == "KICK") {
-    //tft.pushImage(0, 0, 236, 135, kick); //fix position, get image
+    tft.pushImage(0, 0, 236, 135, kickIMG);
+    tft.drawString(cmd, 30, 150, 2);
   }
-  tft.drawString(cmd, 10, 150, 2);
+  
 
 }
 
