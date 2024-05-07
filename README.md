@@ -23,4 +23,4 @@ The players can punch to attack their opponent or block to defend themself. The 
 - At this point, you should be able to upload the code onto your TTGO T-Display by simply pressing the `Upload` button. The code should compile and run.
 
 ## Further Documentation
-To read the full blog post regarding this installation, visit [here]()
+To read the full blog post regarding this installation, visit [here](https://juliahay.github.io/CES-portfolio/finalproject/final.html)
